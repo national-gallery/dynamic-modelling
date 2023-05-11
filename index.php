@@ -4,9 +4,9 @@
 // Added tests for hover text - it just uses a default example text just now
 // Added the option of fixing the properties tags to the lines or letting them float - add "fix" after //Flowchart LR fix
 $versions = array(
-  "jquery" => "3.6.1",
-  "bootstrap" => "5.2.2",
-  "mermaid" => "9.1.7", // 9.2.2 available but it breaks the zoom option, so would need to check.
+  "jquery" => "3.6.4",
+  "bootstrap" => "5.2.3",
+  "mermaid" => "9.4.3", // 9.2.2 available but it breaks the zoom option, so would need to check.
   "tether" => "2.0.0",
   "pako" => "2.1.0",
   "base64" => "3.7.3"
@@ -373,7 +373,7 @@ div.mermaidTooltip {
         <button title="Refresh Model" class="btn btn-default textbtn" id="refreshM" type="submit"  aria-label="Refresh Model"><img aria-label="Refresh Model"  alt="Refresh Model" src="graphics/view-refresh.png" width="$bw" /></button>
         <button title="Clear Text" class="btn btn-default textbtn" id="clear" type="button"  aria-label="Clear Textarea"><img aria-label="Clear Text" alt="Clear Text" src="graphics/clear-text.png" width="$bw" /></button>
         <button title="Help" class="btn btn-default textbtn" id="help" type="button" data-bs-toggle="modal" data-bs-target="#helpModalCenter" aria-label="Open Help Modal"><img alt="Help" aria-label="Help" src="graphics/help.png" width="$bw" /></button>
-        <button title="Toggle Fullscreen" class="btn btn-default textbtn" id="tfs" type="button"  aria-label="Toggle Textarea Full-screen" onclick="togglefullscreen('tfs', 'textholder')"><img alt="Toggle Fullscreen" aria-label="Toggle Fullscreen" src="graphics/view-fullscreen.png" width="$bw" /></button>
+        <button title="Toggle Text Fullscreen" class="btn btn-default textbtn" id="tfs" type="button"  aria-label="Toggle Textarea Full-screen" onclick="togglefullscreen('tfs', 'textholder')"><img alt="Toggle Fullscreen" aria-label="Toggle Fullscreen" src="graphics/view-fullscreen.png" width="$bw" /></button>
     </div>
   </div>
       </form>
@@ -381,7 +381,12 @@ div.mermaidTooltip {
     <!-- LEVEL 3 -->
     <div  role="main" aria-label="Holder for the actual flow diagram model"  id="holder" class="flex-grow-1 moddiv">
   <div class="tbtns" style="">
-      <button class="btn btn-default nav-button textbtn" id="fs"  aria-label="Toggle Model Full-screen"  style="top:0px;left:0px;" onclick="togglefullscreen('fs', 'holder')"><img   alt="Toggle Fullscreen"  aria-label="Toggle Fullscreen" src="graphics/view-fullscreen.png" width="$bw" /></button></div>
+    <div class="form-check form-switch">
+			<input title="Toggle Pan & Zoom function" class="form-check-input" type="checkbox" role="switch" id="zoom-toggle" style="margin-right:0.5em; margin-bottom:2px; margin-top:8px; width:3em; height:1.5em;" onclick="modelZoom()">  
+			<button title="Toggle Model Fullscreen" class="btn btn-default nav-button textbtn" id="fs"  aria-label="Toggle Model Full-screen"  style="top:0px;left:0px;" onclick="togglefullscreen('fs', 'holder')"><img   alt="Toggle Fullscreen"  aria-label="Toggle Fullscreen" src="graphics/view-fullscreen.png" width="$bw" /></button>
+		</div>
+</div>
+      
   <!-- <div style="overflow: hidden; height: 100%;" tabindex=0> -->
   <div id="modelDiv" style="height:100%" class="mermaid">$mermaid</div>
   <!-- </div> -->
@@ -393,7 +398,21 @@ $modal
   <script src="$jslib/jquery@$vs[1]/dist/jquery.min.js"></script>  
   <script src="$jslib/tether@$vs[4]/dist/js/tether.min.js"></script>
   <script src="$jslib/bootstrap@$vs[2]/dist/js/bootstrap.bundle.min.js"></script>
-  <script src="$jslib/mermaid@$vs[3]/dist/mermaid.min.js"></script>
+  <!-- <script src="$jslib/mermaid@$vs[3]/dist/mermaid.min.js"></script> -->
+  <script type="module">
+  import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.esm.min.mjs';    
+    let config = {
+    maxTextSize: 900000,
+    startOnLoad:true, 
+    securityLevel: "loose",
+    logLevel: 4,
+    flowchart: { curve: 'basis', useMaxWidth: false, htmlLabels: true },
+    mermaid: {
+      callback:function(id) {modelZoom ()}
+      }}
+  mermaid.initialize(config);
+
+</script>
   <script src="$jslib/pako@$vs[5]/dist/pako.min.js"></script>
   <script src="$jslib/js-base64@$vs[6]/base64.min.js"></script>
   <script src="./js/svg-pan-zoom.js" crossorigin="anonymous"></script> 
@@ -402,13 +421,7 @@ $modal
  
   let code = JSON.stringify($json_code);
   let pcode = '$pako';
-  console.log (pcode);
-  $( document ).ready(function() { 
-  
-	
-  });
-  
-  
+    
   </script>  
   </body>
 </html>
@@ -425,17 +438,18 @@ function buildModal ()
   {
   // Based on https://bbbootstrap.com/snippets/modal-multiple-tabs-89860645
   $tabs = array(
-    "Summary" => 'This is an interactive live modelling system which can automatically convert simple <b>tab</b> separated triples or JSON-LD into graphical models and flow diagrams using the <a href="https://mermaid-js.github.io/">Mermaid Javascript library</a>. It has been designed to be very simple to use. The tab separated triples can be typed directly into the web-page, but users can also work and prepare data in three (or four columns if applying formatting) of a online spreadsheet and then just copy the relevant columns and paste them directly into the data entry text box.<br/><br/>In general the tools makes use of a simple set of predefined formats for the flow diagrams, taken from the Mermaid library, but a <a href="?example=example_formats">series of additional predefined formats</a> have also be provided and can be defined as a fourth "triple".<br/><br/>The <a href="./">default landing page</a> presents and example set or data, and the generated model, this example demonstrate the functionality provided. As a new user it is recommended that you try editing this data to see how the diagrams are built. Additional examples are also available via the <b>Examples</b> menu option in the upper right.<br/><br/> The system has also be defined to allow models to be shared via automatically generate, and often quite long, URLs. This can be accessed via the <b>Links</b> menu option, as the <b>Bookmark Link</b>. A static image version of any given model can be saved by following the <b>Download Image</b> option and using the tools provide by the <a href="https://mermaid.ink/">Mermaid Ink</a> system. It is also possible to further edit a model using the full options of the Mermaid library using the <a href="https://mermaid-js.github.io/mermaid-live-editor">Mermaid Live Editor</a>, via the <b>Mermaid Editor</b> link.
+    "Information" => 'This is an interactive live modelling system which can automatically convert simple <b>tab</b> separated triples or JSON-LD (experimental) into graphical models and flow diagrams using the <a href="https://mermaid-js.github.io/">Mermaid Javascript library</a>. It has been designed to be very simple to use. The tab separated triples can be typed directly into the web-page, but users can also work and prepare data in three (or four columns if applying formatting) of a online spreadsheet and then just copy the relevant columns and paste them directly into the data entry text box.<br/><br/>In general the tool makes use of a simple set of predefined formats for the flow diagrams, taken from the Mermaid library, but a <a href="?example=example_formats">series of additional predefined formats</a> have also be provided and can be defined as a fourth "triple".<br/><br/>The <a href="./">default landing page</a> presents an example set or data, and the generated model demonstrates the functionality provided. As a new user it is recommended that you try editing this data to see how the diagrams are built. Additional examples are also available via the <b>Examples</b> menu option in the upper right.<br/><br/> The system has also be defined to allow models to be shared via automatically generate, and often quite long, URLs. This can be accessed via the <b>Links</b> menu option, as the <b>Bookmark Link</b>. A static image version of any given model can be saved by following the <b>Download Image</b> option and using the tools provide by the <a href="https://mermaid.ink/">Mermaid Ink</a> system. It is also possible to further edit a model using the full options of the Mermaid library using the <a href="https://mermaid-js.github.io/mermaid-live-editor">Mermaid Live Editor</a>, via the <b>Mermaid Editor</b> link.
     <br/><br/>
-    <h5>This specific project was supported by:</h5>
-<br/>
-    <h6>The H2020 <a href="https://sshopencloud.eu/" rel="nofollow">SSHOC</a> project</h6>
-<p><a href="https://sshopencloud.eu/" rel="nofollow"><img height="48px" src="./graphics/sshoc-logo.png" alt="SSHOC" style="max-width: 100%;"></a>&nbsp;&nbsp;
-<a href="https://sshopencloud.eu/" rel="nofollow"><img height="32px" src="./graphics/sshoc-eu-tag2.png" alt="SSHOC" style="max-width: 100%;"></a></p>
-<br/>
-<h6></a>The H2020 <a href="https://www.iperionhs.eu/" rel="nofollow">IPERION-HS</a> project</h6>
+    <h5>Acknowledgements:</h5>
+This tool was originally developed within the National Gallery, but its continue development and public presentation has also been supported by:
+<br/><br/>
+    <h6></a>The H2020 <a href="https://www.iperionhs.eu/" rel="nofollow">IPERION-HS</a> project</h6>
 <p dir="auto"><a href="https://www.iperionhs.eu/" rel="nofollow"><img height="42px" src="./graphics/IPERION-HS%20Logo.png" alt="IPERION-HS" style="max-width: 100%;"></a>&nbsp;&nbsp;
 <a href="https://www.iperionhs.eu/" rel="nofollow"><img height="32px" src="./graphics/iperionhs-eu-tag2.png" alt="IPERION-HS" style="max-width: 100%;"></a></p>
+<br/>
+<h6>The H2020 <a href="https://sshopencloud.eu/" rel="nofollow">SSHOC</a> project</h6>
+<p><a href="https://sshopencloud.eu/" rel="nofollow"><img height="48px" src="./graphics/sshoc-logo.png" alt="SSHOC" style="max-width: 100%;"></a>&nbsp;&nbsp;
+<a href="https://sshopencloud.eu/" rel="nofollow"><img height="32px" src="./graphics/sshoc-eu-tag2.png" alt="SSHOC" style="max-width: 100%;"></a></p>
 <br/>
 <h6>The AHRC Funded <a href="https://linked.art/" rel="nofollow">Linked.Art</a> project</h6>
 <p><a href="https://ahrc.ukri.org/" rel="nofollow"><img height="48px" src="./graphics/UKRI_AHR_Council-Logo_Horiz-RGB.png" alt="Linked.Art" style="max-width: 100%;"></a></p>',
@@ -631,8 +645,7 @@ END;
 
 
 function getCleanTriples($triplesTxt)
-  {
-
+  {	
   $lastLine = 0;
   $cleanData = array();
   
@@ -776,7 +789,7 @@ function getRaw($data)
   //echo "<!-- $typeCheck -->\n";
   // Defining a thing as have type "Type" is a special case so the "Type" is left as a literal by default
   if (in_array ($typeCheck, array(
-    "crm:p2_has_type", "has_type", "type", "rdf:type")) and strtolower($trip[2]) != "type")
+    "crm:p2_has_type", "has_type", "type", "rdf:type", "classified_as")) and strtolower($trip[2]) != "type")
     {$pt = true;
      $trip["type"] = true;}
   else
@@ -1281,11 +1294,11 @@ function parseEntities($name)
   {
 
   if (preg_match("/^http[s]*[:][\/]+vocab[.]getty[.]edu[\/]aat[\/]([0-9]+)$/", $name, $m))
-    {$out = "aat:$m[1]";}
+    {$out = "aat:$m[1]|$name";}
   else if (preg_match("/^http[s]*[:][\/]+data[.]ng[-]london[.]org[.]uk[\/]([0-9A-Z-]+)$/", $name, $m))
-    {$out = "ng:$m[1]";}
+    {$out = "ng:$m[1]|$name";}
   else if (preg_match("/^http[s]*[:][\/]+linked[.]art[\/]example[\/]([a-z]+[\/][0-9]+)$/", $name, $m))
-    {$out = "lae:$m[1]";}
+    {$out = "lae:$m[1]|$name";}
   else
     {$out = $name;}
 
